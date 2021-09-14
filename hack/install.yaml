@@ -1,0 +1,73 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: octops-controller
+  labels:
+    app: agones-event-broadcaster
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: octops-controller
+  labels:
+    app: agones-event-broadcaster
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["list", "watch"]
+  - apiGroups: ["agones.dev"]
+    resources: ["fleets"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: octops-controller
+  labels:
+    app: agones-event-broadcaster
+subjects:
+  - kind: User
+    name: system:serviceaccount:default:octops-controller
+    apiGroup: rbac.authorization.k8s.io
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: octops-controller
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: octops-image-syncer
+  labels:
+    name: octops-image-syncer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: octops-image-syncer
+  template:
+    metadata:
+      labels:
+        name: octops-image-syncer
+    spec:
+      serviceAccountName: octops-controller
+      containers:
+        - name: octops-image-syncer
+          image: octops-image-syncer:v0.0.1
+          imagePullPolicy: Never
+          env:
+            - name: CONN_TARGET
+              value: "unix:///run/runtime/cri.sock"
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          volumeMounts:
+            - mountPath: /run/runtime/cri.sock
+              name: runtime-sock
+              readOnly: false
+      volumes:
+        - name: runtime-sock
+          hostPath:
+            path: "/run/k3s/containerd/containerd.sock"
+            type: Socket
