@@ -35,13 +35,12 @@ roleRef:
   name: octops-controller
 ---
 apiVersion: apps/v1
-kind: Deployment
+kind: DaemonSet
 metadata:
   name: octops-image-syncer
   labels:
     name: octops-image-syncer
 spec:
-  replicas: 1
   selector:
     matchLabels:
       name: octops-image-syncer
@@ -66,6 +65,14 @@ spec:
             - mountPath: /run/runtime/cri.sock
               name: runtime-sock
               readOnly: false
+          resources:
+            limits:
+              memory: 200Mi
+              cpu: 300m
+            requests:
+              cpu: 100m
+              memory: 100Mi
+      terminationGracePeriodSeconds: 30
       volumes:
         - name: runtime-sock
           hostPath:
