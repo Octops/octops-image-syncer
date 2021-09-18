@@ -3,60 +3,22 @@ package syncer
 import (
 	v1 "agones.dev/agones/pkg/apis/agones/v1"
 	"context"
-	"github.com/Octops/agones-event-broadcaster/pkg/broadcaster"
 	"github.com/Octops/agones-event-broadcaster/pkg/events"
-	"github.com/Octops/octops-image-syncer/pkg/transport"
+	"github.com/Octops/octops-image-syncer/pkg/clients"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
-	"k8s.io/client-go/rest"
 	pb "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
-	"os"
 	"reflect"
-	"time"
 )
 
 //FleetImageSyncer implements the Broker interface used by the Agones Event Broadcaster to notify events
 type FleetImageSyncer struct {
-	broadcaster *broadcaster.Broadcaster
-	conn        *grpc.ClientConn
-	imageClient pb.ImageServiceClient
+	imageClient *clients.ImageServiceClient
 }
 
-func NewFleetImageSyncer(config *rest.Config, duration time.Duration, port int, metricsBindAddress string) (*FleetImageSyncer, error) {
-	syncer := &FleetImageSyncer{}
-	bc := broadcaster.New(config, syncer, duration, port, metricsBindAddress)
-
-	if err := bc.WithWatcherFor(&v1.Fleet{}).Build(); err != nil {
-		return nil, errors.Wrap(err, "error creating broadcaster")
-	}
-
-	conn, err := transport.NewConn(os.Getenv("CONN_TARGET"))
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to create connection")
-	}
-
-	syncer.broadcaster = bc
-	syncer.conn = conn
-	syncer.imageClient = pb.NewImageServiceClient(conn)
-
-	return syncer, nil
-}
-
-func (f *FleetImageSyncer) Start(ctx context.Context) error {
-	defer f.conn.Close()
-
-	go func() {
-		if err := f.broadcaster.Start(); err != nil {
-			logrus.WithError(err).Fatal("error starting broadcaster")
-		}
-	}()
-
-	//TODO: refactor broadcaster to accept ctx on Start method
-	<-ctx.Done()
-
-	logrus.Info("shutting down syncer")
-	return nil
+func NewFleetImageSyncer(conn *grpc.ClientConn) *FleetImageSyncer {
+	return &FleetImageSyncer{imageClient: clients.NewImageServiceClient(conn)}
 }
 
 func (f *FleetImageSyncer) BuildEnvelope(event events.Event) (*events.Envelope, error) {
@@ -124,11 +86,7 @@ func (f *FleetImageSyncer) Unwrap(message interface{}) (*v1.Fleet, error) {
 }
 
 func (f *FleetImageSyncer) CheckImageStatus(image string) (bool, error) {
-	statusRequest := &pb.ImageStatusRequest{
-		Image: &pb.ImageSpec{
-			Image: image,
-		},
-	}
+	statusRequest := createImageStatusRequest(image)
 
 	status, err := f.imageClient.ImageStatus(context.Background(), statusRequest)
 	if err != nil {
@@ -144,11 +102,7 @@ func (f *FleetImageSyncer) CheckImageStatus(image string) (bool, error) {
 }
 
 func (f *FleetImageSyncer) PullImage(image string) (string, error) {
-	request := &pb.PullImageRequest{
-		Image: &pb.ImageSpec{
-			Image: image,
-		},
-	}
+	request := createPullImageRequest(image)
 
 	resp, err := f.imageClient.PullImage(context.Background(), request)
 	if err != nil {
@@ -156,4 +110,20 @@ func (f *FleetImageSyncer) PullImage(image string) (string, error) {
 	}
 
 	return resp.GetImageRef(), nil
+}
+
+func createPullImageRequest(image string) *pb.PullImageRequest {
+	return &pb.PullImageRequest{
+		Image: &pb.ImageSpec{
+			Image: image,
+		},
+	}
+}
+
+func createImageStatusRequest(image string) *pb.ImageStatusRequest {
+	return &pb.ImageStatusRequest{
+		Image: &pb.ImageSpec{
+			Image: image,
+		},
+	}
 }
