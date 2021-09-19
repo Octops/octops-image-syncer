@@ -44,7 +44,9 @@ func (f *FleetImageSyncer) SendMessage(envelope *events.Envelope) error {
 	case "fleet.events.updated":
 		return f.HandleAddedUpdated(fleet)
 	case "fleet.events.deleted":
-		logrus.Infof("fleet %s deleted", fleet.Name)
+		//TODO: Consider a flag to decide if the image must be removed when a fleet is deleted
+		//It may cause a race condition with running gameservers that are still in Terminating state
+		log.Logger().Infof("fleet %s deleted", fleet.Name)
 	}
 
 	return nil
@@ -60,7 +62,7 @@ func (f *FleetImageSyncer) HandleAddedUpdated(fleet *v1.Fleet) error {
 	if ok, err := f.CheckImageStatus(image); err != nil {
 		return errors.Wrap(err, "failed to check image status")
 	} else if ok {
-		logrus.WithFields(fields).Info("image already present")
+		log.Logger().WithFields(fields).Info("image already present")
 
 		return nil
 	}
@@ -70,7 +72,7 @@ func (f *FleetImageSyncer) HandleAddedUpdated(fleet *v1.Fleet) error {
 		return errors.Wrap(err, "failed to pull image")
 	}
 
-	logrus.WithFields(fields).WithField("ref", ref).Info("fleet synced")
+	log.Logger().WithFields(fields).WithField("ref", ref).Info("fleet synced")
 
 	return nil
 }
