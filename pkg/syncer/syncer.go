@@ -4,21 +4,25 @@ import (
 	v1 "agones.dev/agones/pkg/apis/agones/v1"
 	"context"
 	"github.com/Octops/agones-event-broadcaster/pkg/events"
-	"github.com/Octops/octops-image-syncer/pkg/clients"
+	"github.com/Octops/octops-image-syncer/pkg/runtime/log"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"google.golang.org/grpc"
 	pb "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 	"reflect"
 )
 
-//FleetImageSyncer implements the Broker interface used by the Agones Event Broadcaster to notify events
-type FleetImageSyncer struct {
-	imageClient *clients.ImageServiceClient
+type ImageServiceClient interface {
+	ImageStatus(ctx context.Context, request *pb.ImageStatusRequest) (*pb.ImageStatusResponse, error)
+	PullImage(ctx context.Context, request *pb.PullImageRequest) (*pb.PullImageResponse, error)
 }
 
-func NewFleetImageSyncer(conn *grpc.ClientConn) *FleetImageSyncer {
-	return &FleetImageSyncer{imageClient: clients.NewImageServiceClient(conn)}
+//FleetImageSyncer implements the Broker interface used by the Agones Event Broadcaster to notify events
+type FleetImageSyncer struct {
+	imageClient ImageServiceClient
+}
+
+func NewFleetImageSyncer(client ImageServiceClient) *FleetImageSyncer {
+	return &FleetImageSyncer{imageClient: client}
 }
 
 func (f *FleetImageSyncer) BuildEnvelope(event events.Event) (*events.Envelope, error) {
@@ -44,7 +48,9 @@ func (f *FleetImageSyncer) SendMessage(envelope *events.Envelope) error {
 	case "fleet.events.updated":
 		return f.HandleAddedUpdated(fleet)
 	case "fleet.events.deleted":
-		logrus.Infof("fleet %s deleted", fleet.Name)
+		//TODO: Consider a flag to decide if the image must be removed when a fleet is deleted
+		//It may cause a race condition with running gameservers that are still in Terminating state
+		log.Logger().Infof("fleet %s deleted", fleet.Name)
 	}
 
 	return nil
@@ -60,7 +66,7 @@ func (f *FleetImageSyncer) HandleAddedUpdated(fleet *v1.Fleet) error {
 	if ok, err := f.CheckImageStatus(image); err != nil {
 		return errors.Wrap(err, "failed to check image status")
 	} else if ok {
-		logrus.WithFields(fields).Info("image already present")
+		log.Logger().WithFields(fields).Info("image already present")
 
 		return nil
 	}
@@ -70,7 +76,7 @@ func (f *FleetImageSyncer) HandleAddedUpdated(fleet *v1.Fleet) error {
 		return errors.Wrap(err, "failed to pull image")
 	}
 
-	logrus.WithFields(fields).WithField("ref", ref).Info("fleet synced")
+	log.Logger().WithFields(fields).WithField("ref", ref).Info("fleet synced")
 
 	return nil
 }
@@ -93,7 +99,7 @@ func (f *FleetImageSyncer) CheckImageStatus(image string) (bool, error) {
 		return false, errors.Wrap(err, "failed to get image status")
 	}
 
-	if status.Image != nil {
+	if status.Image != nil && len(status.Image.Id) > 0 {
 		return true, nil
 	}
 

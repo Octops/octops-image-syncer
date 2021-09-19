@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"github.com/Octops/octops-image-syncer/pkg/clients"
 	"github.com/Octops/octops-image-syncer/pkg/syncer"
 	"github.com/Octops/octops-image-syncer/pkg/transport"
 	"github.com/Octops/octops-image-syncer/pkg/watcher"
@@ -19,7 +20,8 @@ func Execute(ctx context.Context, config *rest.Config, duration time.Duration, p
 	}
 	defer conn.Close()
 
-	imageSyncer := syncer.NewFleetImageSyncer(conn)
+	imageServiceClient := clients.NewImageServiceClient(conn)
+	imageSyncer := syncer.NewFleetImageSyncer(imageServiceClient)
 	watcherConfig := &watcher.Config{
 		ClientConfig:   config,
 		Duration:       duration,

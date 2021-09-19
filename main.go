@@ -4,7 +4,8 @@ import (
 	"context"
 	"flag"
 	"github.com/Octops/octops-image-syncer/cmd"
-	"github.com/sirupsen/logrus"
+	version "github.com/Octops/octops-image-syncer/internal"
+	"github.com/Octops/octops-image-syncer/pkg/runtime/log"
 	"k8s.io/client-go/tools/clientcmd"
 	"os"
 	"os/signal"
@@ -20,6 +21,7 @@ var (
 )
 
 func main() {
+	log.Logger().Info(version.Info())
 	flag.Parse()
 
 	if kubeconfig == "" {
@@ -28,19 +30,19 @@ func main() {
 
 	clientConf, err := clientcmd.BuildConfigFromFlags(masterURL, kubeconfig)
 	if err != nil {
-		logrus.Fatalf("Error building kubeconfig: %s", err.Error())
+		log.Logger().Fatalf("Error building kubeconfig: %s", err.Error())
 	}
 
 	duration, err := time.ParseDuration(syncPeriod)
 	if err != nil {
-		logrus.WithError(err).Fatalf("error parsing sync-period flag: %s", syncPeriod)
+		log.Logger().WithError(err).Fatalf("error parsing sync-period flag: %s", syncPeriod)
 	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
 
 	if err := cmd.Execute(ctx, clientConf, duration, port, metricsBindAddress); err != nil {
-		logrus.WithError(err).Fatal("failed to start syncer")
+		log.Logger().WithError(err).Fatal("failed to start syncer")
 	}
 }
 

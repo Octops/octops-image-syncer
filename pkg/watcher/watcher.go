@@ -5,8 +5,8 @@ import (
 	"context"
 	"github.com/Octops/agones-event-broadcaster/pkg/broadcaster"
 	"github.com/Octops/agones-event-broadcaster/pkg/brokers"
+	"github.com/Octops/octops-image-syncer/pkg/runtime/log"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 	"k8s.io/client-go/rest"
 	"time"
 )
@@ -40,13 +40,13 @@ func NewFleetWatcher(config *Config, imageSyncer ImageSyncer) (*FleetWatcher, er
 func (f *FleetWatcher) Start(ctx context.Context) error {
 	go func() {
 		if err := f.broadcaster.Start(); err != nil {
-			logrus.WithError(err).Fatal("error starting broadcaster")
+			log.Logger().WithError(err).Fatal("error starting broadcaster")
 		}
 	}()
 
 	//TODO: refactor broadcaster to accept ctx on Start method
 	<-ctx.Done()
 
-	logrus.Info("shutting down syncer")
+	log.Logger().Info("shutting down syncer")
 	return nil
 }
