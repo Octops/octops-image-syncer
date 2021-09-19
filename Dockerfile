@@ -5,7 +5,10 @@ ADD . /go/src/github.com/Octops/octops-image-syncer
 
 RUN go get -d -v ./...
 
-RUN go build -o /go/bin/octops-image-syncer
+ENV APP_BIN /go/bin/octops-image-syncer
+ENV VERSION v0.0.1
+
+RUN make build
 
 FROM gcr.io/distroless/base-debian11
 
