@@ -9,6 +9,57 @@ import (
 	"testing"
 )
 
+func TestFleetImageSyncer_PullImage(t *testing.T) {
+	testCases := []struct {
+		name     string
+		image    string
+		response *pb.PullImageResponse
+		want     string
+		wantErr  bool
+		err      error
+	}{
+		{
+			name:  "pull image",
+			image: "gameserver:latest",
+			response: &pb.PullImageResponse{
+				ImageRef: "sha256:f8cdc89145cb0b5d6ee2ea95968310c45e4f453dd24ac682ff13f50f0d4b921d",
+			},
+			want:    "sha256:f8cdc89145cb0b5d6ee2ea95968310c45e4f453dd24ac682ff13f50f0d4b921d",
+			wantErr: false,
+		},
+		{
+			name:     "error pulling image",
+			image:    "gameserver:latest",
+			response: &pb.PullImageResponse{},
+			want:     "",
+			wantErr:  true,
+			err:      errors.New("failed"),
+		},
+	}
+
+	ctx := context.Background()
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			client := new(imageServiceClient)
+			imageSyncer := NewFleetImageSyncer(client)
+			request := createPullImageRequest(tc.image)
+			client.On("PullImage", ctx, request).Return(tc.response, tc.err)
+
+			got, err := imageSyncer.PullImage(tc.image)
+			require.Equal(t, tc.want, got)
+			require.Equal(t, err != nil, tc.wantErr)
+			require.ErrorIs(t, err, tc.err)
+			require.Condition(t, func() (success bool) {
+				if tc.wantErr {
+					return err.Error() == errors.Wrap(tc.err, "failed to pull image").Error()
+				}
+
+				return true
+			})
+		})
+	}
+}
+
 func TestFleetImageSyncer_CheckImageStatus(t *testing.T) {
 	testCases := []struct {
 		name     string
@@ -54,10 +105,16 @@ func TestFleetImageSyncer_CheckImageStatus(t *testing.T) {
 			request := createImageStatusRequest(tc.image)
 			client.On("ImageStatus", ctx, request).Return(tc.response, tc.err)
 
-			ok, err := imageSyncer.CheckImageStatus(tc.image)
-			require.Equal(t, tc.want, ok)
+			got, err := imageSyncer.CheckImageStatus(tc.image)
+			require.Equal(t, tc.want, got)
 			require.Equal(t, err != nil, tc.wantErr)
-			require.ErrorIs(t, err, tc.err)
+			require.Condition(t, func() (success bool) {
+				if tc.wantErr {
+					return err.Error() == errors.Wrap(tc.err, "failed to get image status").Error()
+				}
+
+				return true
+			})
 		})
 	}
 }
