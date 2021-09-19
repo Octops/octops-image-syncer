@@ -28,10 +28,10 @@ There are two possible outputs when the application is running:
 
 ```bash
 #Image not present
-{"fleet":"simple-game-server","image":"gcr.io/agones-images/simple-game-server:0.3","message":"fleet synced","ref":"sha256:f8cdc89145cb0b5d6ee2ea95968310c45e4f453dd24ac682ff13f50f0d4b921d","severity":"info","time":"2021-09-18T10:42:12.456488899Z"}
+INFO[0031] fleet synced             fleet=simple-game-server image="gcr.io/agones-images/simple-game-server:0.3" ref="sha256:f8cdc89145cb0b5d6ee2ea95968310c45e4f453dd24ac682ff13f50f0d4b921d"
 
 #Image already present
-{"fleet":"simple-game-server","image":"gcr.io/agones-images/simple-game-server:0.3","message":"image already present","severity":"info","time":"2021-09-18T10:41:56.179672762Z"}
+INFO[0000] image already present    fleet=simple-game-server image="gcr.io/agones-images/simple-game-server:0.3"
 ```
 
 ## Requirements
