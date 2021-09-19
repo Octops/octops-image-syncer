@@ -54,6 +54,6 @@ func init() {
 	}
 
 	flag.IntVar(&port, "addr", 8090, "Port used by the broadcaster to communicate via http")
-	flag.StringVar(&syncPeriod, "sync-period", "15s", "Determines the minimum frequency at which watched resources are reconciled")
+	flag.StringVar(&syncPeriod, "sync-period", "15s", "Determines the minimum frequency that the syncer will check for Fleets updates")
 	flag.StringVar(&metricsBindAddress, "metrics-bind-address", "0.0.0.0:8095", "The TCP address that the controller should bind to for serving prometheus metrics")
 }

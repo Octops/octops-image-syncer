@@ -54,13 +54,13 @@ spec:
         - name: octops-image-syncer
           image: octops-image-syncer:v0.0.1
           imagePullPolicy: Never
-          env:
-            - name: CONN_TARGET
-              value: "unix:///run/runtime/cri.sock"
           ports:
             - name: http
               containerPort: 80
               protocol: TCP
+          env:
+            - name: CONN_TARGET
+              value: "unix:///run/runtime/cri.sock"
           volumeMounts:
             - mountPath: /run/runtime/cri.sock
               name: runtime-sock
