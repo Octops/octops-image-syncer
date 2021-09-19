@@ -18,7 +18,7 @@ else
 endif
 
 PKG_NAME=github.com/Octops/octops-image-syncer
-APP_BIN := bin/octops-image-syncer
+APP_BIN ?= bin/octops-image-syncer
 DOCKER_IMAGE_TAG ?= octops/octops-image-syncer:${VERSION}
 
 LDFLAGS := -X "${PKG_NAME}/internal/version.Version=${VERSION}"

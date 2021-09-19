@@ -4,7 +4,7 @@ import (
 	"context"
 	"flag"
 	"github.com/Octops/octops-image-syncer/cmd"
-	version "github.com/Octops/octops-image-syncer/internal"
+	"github.com/Octops/octops-image-syncer/internal/version"
 	"github.com/Octops/octops-image-syncer/pkg/runtime/log"
 	"k8s.io/client-go/tools/clientcmd"
 	"os"
