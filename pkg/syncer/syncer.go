@@ -4,21 +4,25 @@ import (
 	v1 "agones.dev/agones/pkg/apis/agones/v1"
 	"context"
 	"github.com/Octops/agones-event-broadcaster/pkg/events"
-	"github.com/Octops/octops-image-syncer/pkg/clients"
+	"github.com/Octops/octops-image-syncer/pkg/runtime/log"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"google.golang.org/grpc"
 	pb "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 	"reflect"
 )
 
-//FleetImageSyncer implements the Broker interface used by the Agones Event Broadcaster to notify events
-type FleetImageSyncer struct {
-	imageClient *clients.ImageServiceClient
+type ImageServiceClient interface {
+	ImageStatus(ctx context.Context, request *pb.ImageStatusRequest) (*pb.ImageStatusResponse, error)
+	PullImage(ctx context.Context, request *pb.PullImageRequest) (*pb.PullImageResponse, error)
 }
 
-func NewFleetImageSyncer(conn *grpc.ClientConn) *FleetImageSyncer {
-	return &FleetImageSyncer{imageClient: clients.NewImageServiceClient(conn)}
+//FleetImageSyncer implements the Broker interface used by the Agones Event Broadcaster to notify events
+type FleetImageSyncer struct {
+	imageClient ImageServiceClient
+}
+
+func NewFleetImageSyncer(client ImageServiceClient) *FleetImageSyncer {
+	return &FleetImageSyncer{imageClient: client}
 }
 
 func (f *FleetImageSyncer) BuildEnvelope(event events.Event) (*events.Envelope, error) {
@@ -95,7 +99,7 @@ func (f *FleetImageSyncer) CheckImageStatus(image string) (bool, error) {
 		return false, errors.Wrap(err, "failed to get image status")
 	}
 
-	if status.Image != nil {
+	if status.Image != nil && len(status.Image.Id) > 0 {
 		return true, nil
 	}
 
