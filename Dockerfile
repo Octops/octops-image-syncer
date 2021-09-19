@@ -7,8 +7,8 @@ RUN go get -d -v ./...
 
 RUN go build -o /go/bin/octops-image-syncer
 
-FROM gcr.io/distroless/base
+FROM gcr.io/distroless/base-debian11
 
 COPY --from=build-env /go/bin/octops-image-syncer /
 
-CMD ["/octops-image-syncer"]
+ENTRYPOINT ["/octops-image-syncer"]
