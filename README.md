@@ -21,7 +21,7 @@ The syncing process is not coupled to any specific container runtime like Docker
 A few extra considerations:
 - It runs as Daemonset. This is the recommended way. You can replace the daemonset by ordinary deployments and use the [NodeAffinity](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/) to decide your deployment strategy.
 - Pull images for all fleets deployed on the cluster. Labels or annotations for filtering are not supported yet.
-- The Dockerfile used to build the application uses a [Distroless image](https://github.com/GoogleContainerTools/distroless). Distroless images contain only your application and its runtime dependencies. They do not contain package managers, shells or any other programs you would expect to find in a standard Linux distribution.
+- The Dockerfile used to build the application uses a [Distroless image](https://github.com/GoogleContainerTools/distroless). Distroless images contain only the application binary and its runtime dependencies. They do not contain package managers, shells or any other programs you would expect to find in a standard Linux distribution.
 - Tested on Kubernetes 1.20+. If you find any issue running on a different Kubernetes version, please file an issue.
 
 There are two possible outputs when the application is running:
