@@ -52,7 +52,7 @@ spec:
       serviceAccountName: octops-controller
       containers:
         - name: octops-image-syncer
-          image: octops/octops-image-syncer:v0.0.1
+          image: octops/octops-image-syncer:v0.1.0
           imagePullPolicy: Never
           ports:
             - name: http
