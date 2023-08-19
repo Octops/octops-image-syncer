@@ -1,14 +1,15 @@
 package syncer
 
 import (
-	v1 "agones.dev/agones/pkg/apis/agones/v1"
 	"context"
+	"reflect"
+
+	v1 "agones.dev/agones/pkg/apis/agones/v1"
 	"github.com/Octops/agones-event-broadcaster/pkg/events"
 	"github.com/Octops/octops-image-syncer/pkg/runtime/log"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	pb "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
-	"reflect"
+	pb "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
 type ImageServiceClient interface {
@@ -16,7 +17,7 @@ type ImageServiceClient interface {
 	PullImage(ctx context.Context, request *pb.PullImageRequest) (*pb.PullImageResponse, error)
 }
 
-//FleetImageSyncer implements the Broker interface used by the Agones Event Broadcaster to notify events
+// FleetImageSyncer implements the Broker interface used by the Agones Event Broadcaster to notify events
 type FleetImageSyncer struct {
 	imageClient ImageServiceClient
 }

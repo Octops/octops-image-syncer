@@ -1,14 +1,15 @@
 package watcher
 
 import (
-	v1 "agones.dev/agones/pkg/apis/agones/v1"
 	"context"
+	"time"
+
+	v1 "agones.dev/agones/pkg/apis/agones/v1"
 	"github.com/Octops/agones-event-broadcaster/pkg/broadcaster"
 	"github.com/Octops/agones-event-broadcaster/pkg/brokers"
 	"github.com/Octops/octops-image-syncer/pkg/runtime/log"
 	"github.com/pkg/errors"
 	"k8s.io/client-go/rest"
-	"time"
 )
 
 type Config struct {
@@ -39,12 +40,11 @@ func NewFleetWatcher(config *Config, imageSyncer ImageSyncer) (*FleetWatcher, er
 
 func (f *FleetWatcher) Start(ctx context.Context) error {
 	go func() {
-		if err := f.broadcaster.Start(); err != nil {
+		if err := f.broadcaster.Start(ctx); err != nil {
 			log.Logger().WithError(err).Fatal("error starting broadcaster")
 		}
 	}()
 
-	//TODO: refactor broadcaster to accept ctx on Start method
 	<-ctx.Done()
 
 	log.Logger().Info("shutting down syncer")
