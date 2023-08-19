@@ -1,16 +1,18 @@
-FROM golang:1.17 as build-env
+FROM golang:1.20 as build-env
 
 WORKDIR /go/src/github.com/Octops/octops-image-syncer
-ADD . /go/src/github.com/Octops/octops-image-syncer
 
-RUN go get -d -v ./...
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
 
 ENV APP_BIN /go/bin/octops-image-syncer
-ENV VERSION v0.0.1
+ENV VERSION v0.1.1
 
 RUN make build
 
-FROM gcr.io/distroless/base-debian11
+FROM gcr.io/distroless/static:nonroot
 
 COPY --from=build-env /go/bin/octops-image-syncer /
 

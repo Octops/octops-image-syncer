@@ -3,7 +3,8 @@ package clients
 import (
 	"context"
 	"google.golang.org/grpc"
-	pb "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
+
+	pb "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
 type ImageServiceClient struct {

@@ -3,13 +3,14 @@ package main
 import (
 	"context"
 	"flag"
+	"os"
+	"os/signal"
+	"time"
+
 	"github.com/Octops/octops-image-syncer/cmd"
 	"github.com/Octops/octops-image-syncer/internal/version"
 	"github.com/Octops/octops-image-syncer/pkg/runtime/log"
 	"k8s.io/client-go/tools/clientcmd"
-	"os"
-	"os/signal"
-	"time"
 )
 
 var (

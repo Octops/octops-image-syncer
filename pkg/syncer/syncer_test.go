@@ -2,11 +2,12 @@ package syncer
 
 import (
 	"context"
+	"testing"
+
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	pb "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
-	"testing"
+	pb "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
 func TestFleetImageSyncer_PullImage(t *testing.T) {
